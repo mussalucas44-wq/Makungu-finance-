@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makungu Group · Financial System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .card-hover {
+            transition: all 0.2s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        #login-container, #app-container {
+            transition: opacity 0.3s ease;
+        }
+        .status-badge {
+            @apply px-2 py-1 text-xs rounded-full font-medium;
+        }
+        .status-pending {
+            @apply bg-yellow-100 text-yellow-800;
+        }
+        .status-approved {
+            @apply bg-green-100 text-green-800;
+        }
+        .status-rejected {
+            @apply bg-red-100 text-red-800;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+<!-- Login Screen -->
+<div id="login-container" class="fixed inset-0 flex items-center justify-center bg-gray-100 z-50">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+        <!-- Logo placeholder -->
+        <div class="flex justify-center mb-4">
+            <img src="logo.png" alt="Makungu Group Logo" class="h-16 w-auto" onerror="this.style.display='none'">
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">Makungu Group</h1>
+        <p class="text-center text-gray-500 mb-6">Financial System · Login</p>
+        <form id="login-form">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="email" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+            </div>
+            <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+            </div>
+            <div class="text-right mb-6">
+                <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:underline">Forgot password?</button>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Sign In</button>
+        </form>
+        <p class="text-xs text-gray-400 text-center mt-4">Demo accounts: admin@example.com / password123 (admin) | staff@example.com / password456 (staff)</p>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgot-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4">Reset Password</h3>
+        <div id="reset-step-1">
+            <p class="text-sm text-gray-600 mb-4">Enter your email address. We'll send a verification code.</p>
+            <input type="email" id="reset-email" placeholder="Your email" class="w-full border rounded-lg px-3 py-2 mb-4">
+            <div class="flex justify-end space-x-2">
+                <button id="cancel-reset" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                <button id="send-code-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Send Code</button>
+            </div>
+        </div>
+        <div id="reset-step-2" class="hidden">
+            <p class="text-sm text-gray-600 mb-2">Enter the 6‑digit code sent to your email and your new password.</p>
+            <input type="text" id="reset-code" placeholder="6-digit code" class="w-full border rounded-lg px-3 py-2 mb-3" maxlength="6">
+            <input type="password" id="new-password" placeholder="New password" class="w-full border rounded-lg px-3 py-2 mb-3">
+            <div class="flex justify-end space-x-2">
+                <button id="back-to-step1" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Back</button>
+                <button id="reset-password-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Reset Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Application -->
+<div id="app-container" class="hidden">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg flex flex-col">
+            <div class="p-5 border-b flex items-center space-x-3">
+                <img src="logo.png" alt="Logo" class="h-8 w-8 rounded-full" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Makungu Group</h1>
+                    <p class="text-sm text-gray-500">Financial System</p>
+                </div>
+            </div>
+            <nav class="flex-1 p-4 space-y-1">
+                <button id="nav-dashboard" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-home text-gray-500"></i><span>Dashboard</span>
+                </button>
+                <button id="nav-wakala" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-hand-holding-usd text-gray-500"></i><span>Wakala</span>
+                </button>
+                <button id="nav-saloon" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-cut text-gray-500"></i><span>Saloon</span>
+                </button>
+                <button id="nav-transactions" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-exchange-alt text-gray-500"></i><span>Journal</span>
+                </button>
+                <button id="nav-vouchers" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-file-invoice text-gray-500"></i><span>Payment Vouchers</span>
+                </button>
+                <button id="nav-users" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-users text-gray-500"></i><span>Users</span>
+                </button>
+                <button id="nav-reports" class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 hover:bg-blue-50 transition">
+                    <i class="fas fa-chart-pie text-gray-500"></i><span>Reports</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="mb-2 px-2 text-sm text-gray-600">
+                    <i class="fas fa-user-circle mr-1"></i> Logged in as <span id="user-email-display"></span> (<span id="user-role-display"></span>)
+                </div>
+                <button id="logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center space-x-3">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </button>
+                <p class="text-xs text-gray-400 mt-2"><i class="fas fa-database mr-1"></i> Data stored locally</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <div id="content-area"></div>
+        </main>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- BACKEND API URL (YOUR LIVE BACKEND) ----------
+        const BACKEND_URL = 'https://makungu-backend.onrender.com';
+
+        // ---------- Global state ----------
+        let currentUser = null;
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            };
+            if (body) options.body = JSON.stringify(body);
+            const response = await fetch(BACKEND_URL + endpoint, options);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Request failed');
+            return data;
+        }
+
+        // ---------- Login ----------
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            try {
+                const data = await apiCall('/api/login', 'POST', { email, password });
+                currentUser = data.user;
+                sessionStorage.setItem('makungu_user', JSON.stringify(currentUser));
+                showApp();
+                initData();
+                render();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        function isLoggedIn() {
+            const stored = sessionStorage.getItem('makungu_user');
+            if (stored) {
+                try {
+                    currentUser = JSON.parse(stored);
+                    return true;
+                } catch (e) {}
+            }
+            return false;
+        }
+
+        function getCurrentUserRole() {
+            return currentUser ? currentUser.role : 'staff';
+        }
+
+        function showApp() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('user-email-display').innerText = currentUser.email;
+            document.getElementById('user-role-display').innerText = currentUser.role;
+            const usersTab = document.getElementById('nav-users');
+            if (usersTab) {
+                usersTab.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+            sessionStorage.removeItem('makungu_user');
+            currentUser = null;
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', showLogin);
+
+        // ---------- Forgot Password ----------
+        const forgotModal = document.getElementById('forgot-modal');
+        const step1 = document.getElementById('reset-step-1');
+        const step2 = document.getElementById('reset-step-2');
+        let resetEmail = '';
+
+        document.getElementById('forgot-password-btn').addEventListener('click', () => {
+            forgotModal.classList.remove('hidden');
+            step1.classList.remove('hidden');
+            step2.classList.add('hidden');
+            document.getElementById('reset-email').value = '';
+        });
+
+        document.getElementById('cancel-reset').addEventListener('click', () => {
+            forgotModal.classList.add('hidden');
+        });
+
+        document.getElementById('back-to-step1').addEventListener('click', () => {
+            step1.classList.remove('hidden');
+            step2.classList.add('hidden');
+        });
+
+        document.getElementById('send-code-btn').addEventListener('click', async () => {
+            const email = document.getElementById('reset-email').value.trim();
+            if (!email) {
+                alert('Please enter your email');
+                return;
+            }
+            try {
+                await apiCall('/api/forgot-password', 'POST', { email });
+                resetEmail = email;
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                document.getElementById('reset-code').value = '';
+                document.getElementById('new-password').value = '';
+                alert('Verification code sent to your email!');
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        document.getElementById('reset-password-btn').addEventListener('click', async () => {
+            const code = document.getElementById('reset-code').value.trim();
+            const newPass = document.getElementById('new-password').value;
+            if (!code || !newPass) {
+                alert('Please fill both fields');
+                return;
+            }
+            try {
+                await apiCall('/api/reset-password', 'POST', {
+                    email: resetEmail,
+                    code,
+                    newPassword: newPass,
+                });
+                alert('Password updated. You can now log in with your new password.');
+                forgotModal.classList.add('hidden');
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        // ---------- Data model ----------
+        let data = {
+            accounts: [
+                { id: 'acc1', name: 'Main Bank', balance: 25000 },
+                { id: 'acc2', name: 'Petty Cash', balance: 1500 }
+            ],
+            categories: [
+                { id: 'cat1', name: 'Donations', type: 'income' },
+                { id: 'cat2', name: 'Grants', type: 'income' },
+                { id: 'cat3', name: 'Program Revenue', type: 'income' },
+                { id: 'cat4', name: 'Salaries', type: 'expense' },
+                { id: 'cat5', name: 'Supplies', type: 'expense' },
+                { id: 'cat6', name: 'Travel', type: 'expense' },
+                { id: 'cat7', name: 'Administrative', type: 'expense' }
+            ],
+            businesses: [
+                { id: 'biz_wakala', name: 'Makungu Wakala', type: 'wakala', budget: 10000 },
+                { id: 'biz_saloon', name: 'Makungu Saloon', type: 'saloon', budget: 8000 }
+            ],
+            transactions: [],
+            vouchers: []
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem('makungu_finance');
+            if (saved) {
+                try { 
+                    data = JSON.parse(saved); 
+                    data.businesses = data.businesses.map(b => ({ ...b, budget: b.budget || 0 }));
+                } catch (e) { console.warn('Failed to load data'); }
+            } else {
+                const today = new Date();
+                const lastMonth = new Date(today); lastMonth.setMonth(lastMonth.getMonth()-1);
+                data.transactions = [
+                    { id: 't1', date: lastMonth.toISOString().slice(0,10), description: 'Commission income', amount: 5000, type: 'income', category: 'cat3', business: 'biz_wakala' },
+                    { id: 't2', date: lastMonth.toISOString().slice(0,10), description: 'Haircuts revenue', amount: 3200, type: 'income', category: 'cat3', business: 'biz_saloon' },
+                    { id: 't3', date: today.toISOString().slice(0,10), description: 'Rent', amount: 1000, type: 'expense', category: 'cat7', business: 'biz_wakala' },
+                    { id: 't4', date: today.toISOString().slice(0,10), description: 'Shampoo supplies', amount: 450, type: 'expense', category: 'cat5', business: 'biz_saloon' }
+                ];
+                data.vouchers = [
+                    { id: 'v1', date: today.toISOString().slice(0,10), description: 'Water bill', amount: 200, category: 'cat7', business: 'biz_saloon', status: 'pending', created: new Date().toISOString() }
+                ];
+                saveData();
+            }
+        }
+
+        function initData() {
+            loadData();
+        }
+
+        function saveData() {
+            localStorage.setItem('makungu_finance', JSON.stringify(data));
+        }
+
+        // Helpers
+        function getCategoryName(catId) {
+            const cat = data.categories.find(c => c.id === catId);
+            return cat ? cat.name : 'Unknown';
+        }
+
+        function getBusinessName(bizId) {
+            const biz = data.businesses.find(b => b.id === bizId);
+            return biz ? biz.name : '—';
+        }
+
+        function getBusinessSummary(bizId) {
+            let income = 0, expense = 0;
+            data.transactions.forEach(t => {
+                if (t.business === bizId) {
+                    if (t.type === 'income') income += t.amount;
+                    else expense += t.amount;
+                }
+            });
+            const balance = income - expense;
+            return { income, expense, balance };
+        }
+
+        function calculateTotalBalance() {
+            let total = 0;
+            data.transactions.forEach(t => {
+                if (t.type === 'income') total += t.amount;
+                else total -= t.amount;
+            });
+            return total;
+        }
+
+        function formatMoney(amount) {
+            return 'TSh ' + amount.toLocaleString();
+        }
+
+        // ---------- Routing ----------
+        let currentTab = 'dashboard';
+
+        function render() {
+            const area = document.getElementById('content-area');
+            if (!area) return;
+
+            if (currentTab === 'dashboard') renderDashboard(area);
+            else if (currentTab === 'wakala') renderBusinessPage('biz_wakala', area);
+            else if (currentTab === 'saloon') renderBusinessPage('biz_saloon', area);
+            else if (currentTab === 'transactions') renderTransactions(area);
+            else if (currentTab === 'vouchers') renderVouchers(area);
+            else if (currentTab === 'users') renderUsersPage(area);
+            else if (currentTab === 'reports') renderReports(area);
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'bg-blue-500', 'text-white'));
+            const activeBtn = document.getElementById(`nav-${currentTab}`);
+            if (activeBtn) activeBtn.classList.add('active', 'bg-blue-500', 'text-white');
+        }
+
+        // ---------- Dashboard ----------
+        function renderDashboard(area) {
+            const totalBalance = calculateTotalBalance();
+            const totalIncome = data.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const totalExpense = data.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const recent = data.transactions.slice().sort((a,b) => b.date.localeCompare(a.date)).slice(0,5);
+            const pendingCount = data.vouchers.filter(v => v.status === 'pending').length;
+
+            let html = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
+                <!-- KPI cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-100 rounded-full text-blue-600"><i class="fas fa-wallet text-xl"></i></div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Total Balance</p>
+                                <p class="text-2xl font-bold">${formatMoney(totalBalance)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-100 rounded-full text-green-600"><i class="fas fa-arrow-down text-xl"></i></div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Total Income</p>
+                                <p class="text-2xl font-bold">${formatMoney(totalIncome)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-red-100 rounded-full text-red-600"><i class="fas fa-arrow-up text-xl"></i></div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Total Expenses</p>
+                                <p class="text-2xl font-bold">${formatMoney(totalExpense)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-100 rounded-full text-yellow-600"><i class="fas fa-clock text-xl"></i></div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Pending Vouchers</p>
+                                <p class="text-2xl font-bold">${pendingCount}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Snapshots -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    ${data.businesses.map(biz => {
+                        const sum = getBusinessSummary(biz.id);
+                        const budget = biz.budget || 0;
+                        const spent = sum.expense;
+                        const percent = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
+                        return `
+                            <div class="bg-white rounded-xl shadow p-6">
+                                <h3 class="font-semibold text-lg mb-2">${biz.name}</h3>
+                                <div class="grid grid-cols-3 gap-2 text-sm mb-2">
+                                    <div><span class="text-gray-500">Income</span><br><span class="font-bold text-green-600">${formatMoney(sum.income)}</span></div>
+                                    <div><span class="text-gray-500">Expenses</span><br><span class="font-bold text-red-600">${formatMoney(sum.expense)}</span></div>
+                                    <div><span class="text-gray-500">Balance</span><br><span class="font-bold text-blue-600">${formatMoney(sum.balance)}</span></div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="flex justify-between text-xs">
+                                        <span>Budget vs Actual</span>
+                                        <span>${formatMoney(spent)} / ${formatMoney(budget)}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${percent}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h3 class="font-semibold text-lg mb-4 flex items-center"><i class="fas fa-history mr-2 text-gray-400"></i>Recent Journal Entries</h3>
+                    <table class="w-full text-sm">
+                        <thead><tr class="border-b"><th class="text-left pb-2">Date</th><th class="text-left">Business</th><th class="text-left">Description</th><th class="text-right">Amount</th></tr></thead>
+                        <tbody>
+                            ${recent.map(t => `
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2">${t.date}</td>
+                                    <td>${getBusinessName(t.business)}</td>
+                                    <td>${t.description}</td>
+                                    <td class="text-right ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</td>
+                                </tr>
+                            `).join('')}
+                            ${recent.length === 0 ? '<tr><td colspan="4" class="py-4 text-center text-gray-400">No transactions yet</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            area.innerHTML = html;
+        }
+
+        // ---------- Business Page ----------
+        function renderBusinessPage(bizId, area) {
+            const biz = data.businesses.find(b => b.id === bizId);
+            if (!biz) return;
+
+            const summary = getBusinessSummary(bizId);
+            const transactions = data.transactions
+                .filter(t => t.business === bizId)
+                .sort((a,b) => b.date.localeCompare(a.date));
+
+            const isAdmin = getCurrentUserRole() === 'admin';
+
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">${biz.name}</h2>
+                    ${isAdmin ? `
+                        <button class="add-transaction-biz bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center" data-biz="${bizId}">
+                            <i class="fas fa-plus mr-2"></i>Add Transaction
+                        </button>
+                    ` : ''}
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <p class="text-sm text-gray-500">Total Income</p>
+                        <p class="text-3xl font-bold text-green-600">${formatMoney(summary.income)}</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <p class="text-sm text-gray-500">Total Expenses</p>
+                        <p class="text-3xl font-bold text-red-600">${formatMoney(summary.expense)}</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6 card-hover">
+                        <p class="text-sm text-gray-500">Current Balance</p>
+                        <p class="text-3xl font-bold text-blue-600">${formatMoney(summary.balance)}</p>
+                    </div>
+                </div>
+
+                <!-- Budget Section -->
+                ${isAdmin ? `
+                    <div class="bg-white rounded-xl shadow p-6 mb-8">
+                        <h3 class="font-semibold text-lg mb-4">Budget Settings</h3>
+                        <div class="flex items-end space-x-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Budget (TSh)</label>
+                                <input type="number" id="budget-input" value="${biz.budget || 0}" class="border rounded-lg px-3 py-2 w-48">
+                            </div>
+                            <button id="save-budget-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Update Budget</button>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm">
+                                <span>Budget vs Actual</span>
+                                <span>${formatMoney(summary.expense)} / ${formatMoney(biz.budget || 0)}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 mt-1">
+                                <div class="bg-blue-600 h-3 rounded-full" style="width: ${biz.budget ? Math.min(100, (summary.expense / biz.budget) * 100) : 0}%"></div>
+                            </div>
+                            <p class="text-sm mt-2 ${summary.expense > (biz.budget || 0) ? 'text-red-600' : 'text-green-600'}">
+                                ${summary.expense > (biz.budget || 0) ? 'Over budget by ' + formatMoney(summary.expense - (biz.budget || 0)) : 'Under budget by ' + formatMoney((biz.budget || 0) - summary.expense)}
+                            </p>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="bg-white rounded-xl shadow p-6 mb-8">
+                        <h3 class="font-semibold text-lg mb-2">Budget Overview</h3>
+                        <div class="flex justify-between text-sm">
+                            <span>Budget vs Actual</span>
+                            <span>${formatMoney(summary.expense)} / ${formatMoney(biz.budget || 0)}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 mt-1">
+                            <div class="bg-blue-600 h-3 rounded-full" style="width: ${biz.budget ? Math.min(100, (summary.expense / biz.budget) * 100) : 0}%"></div>
+                        </div>
+                    </div>
+                `}
+
+                <!-- Transactions List -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h3 class="font-semibold text-lg mb-4">Transactions</h3>
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Description</th><th class="px-4 py-3 text-left">Category</th><th class="px-4 py-3 text-right">Amount</th>${isAdmin ? '<th class="px-4 py-3 text-center">Actions</th>' : ''}</tr>
+                        </thead>
+                        <tbody>
+                            ${transactions.map(t => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-3">${t.date}</td>
+                                    <td class="px-4 py-3">${t.description}</td>
+                                    <td class="px-4 py-3">${getCategoryName(t.category)}</td>
+                                    <td class="px-4 py-3 text-right ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</td>
+                                    ${isAdmin ? `
+                                        <td class="px-4 py-3 text-center">
+                                            <button class="delete-transaction text-red-500 hover:text-red-700" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    ` : ''}
+                                </tr>
+                            `).join('')}
+                            ${transactions.length === 0 ? '<tr><td colspan="5" class="py-6 text-center text-gray-400">No transactions for this business.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            area.innerHTML = html;
+
+            if (isAdmin) {
+                document.querySelector('.add-transaction-biz')?.addEventListener('click', (e) => {
+                    const biz = e.currentTarget.dataset.biz;
+                    showTransactionForm(null, biz);
+                });
+
+                document.querySelectorAll('.delete-transaction').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!confirm('Delete this transaction?')) return;
+                        const id = e.currentTarget.dataset.id;
+                        data.transactions = data.transactions.filter(t => t.id !== id);
+                        saveData();
+                        render();
+                    });
+                });
+
+                document.getElementById('save-budget-btn')?.addEventListener('click', () => {
+                    const newBudget = parseFloat(document.getElementById('budget-input').value);
+                    if (isNaN(newBudget) || newBudget < 0) {
+                        alert('Please enter a valid positive number');
+                        return;
+                    }
+                    biz.budget = newBudget;
+                    saveData();
+                    render();
+                });
+            }
+        }
+
+        // ---------- Journal ----------
+        function renderTransactions(area) {
+            const transactions = [...data.transactions].sort((a,b) => b.date.localeCompare(a.date));
+            const isAdmin = getCurrentUserRole() === 'admin';
+
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Journal</h2>
+                    ${isAdmin ? `
+                        <button id="add-transaction-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center"><i class="fas fa-plus mr-2"></i>Add Direct Entry</button>
+                    ` : ''}
+                </div>
+
+                <div class="bg-white rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Business</th><th class="px-4 py-3 text-left">Description</th><th class="px-4 py-3 text-left">Category</th><th class="px-4 py-3 text-right">Amount</th>${isAdmin ? '<th class="px-4 py-3 text-center">Actions</th>' : ''}</tr>
+                        </thead>
+                        <tbody>
+                            ${transactions.map(t => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-3">${t.date}</td>
+                                    <td class="px-4 py-3">${getBusinessName(t.business)}</td>
+                                    <td class="px-4 py-3">${t.description}</td>
+                                    <td class="px-4 py-3">${getCategoryName(t.category)}</td>
+                                    <td class="px-4 py-3 text-right ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</td>
+                                    ${isAdmin ? `
+                                        <td class="px-4 py-3 text-center">
+                                            <button class="delete-transaction text-red-500 hover:text-red-700" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    ` : ''}
+                                </tr>
+                            `).join('')}
+                            ${transactions.length === 0 ? '<tr><td colspan="6" class="py-6 text-center text-gray-400">No journal entries.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            area.innerHTML = html;
+
+            if (isAdmin) {
+                document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
+                    showTransactionForm();
+                });
+
+                document.querySelectorAll('.delete-transaction').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!confirm('Delete this transaction?')) return;
+                        const id = e.currentTarget.dataset.id;
+                        data.transactions = data.transactions.filter(t => t.id !== id);
+                        saveData();
+                        render();
+                    });
+                });
+            }
+        }
+
+        // ---------- Vouchers ----------
+        function renderVouchers(area) {
+            const vouchers = [...data.vouchers].sort((a,b) => b.date.localeCompare(a.date));
+            const isAdmin = getCurrentUserRole() === 'admin';
+
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Payment Vouchers</h2>
+                    <button id="raise-voucher-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center"><i class="fas fa-plus mr-2"></i>Raise Voucher</button>
+                </div>
+
+                <!-- Filter tabs -->
+                <div class="mb-4 flex space-x-2">
+                    <button class="filter-voucher px-3 py-1 text-sm rounded-full bg-gray-200 hover:bg-gray-300" data-status="all">All</button>
+                    <button class="filter-voucher px-3 py-1 text-sm rounded-full bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-status="pending">Pending</button>
+                    <button class="filter-voucher px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 hover:bg-green-200" data-status="approved">Approved</button>
+                    <button class="filter-voucher px-3 py-1 text-sm rounded-full bg-red-100 text-red-800 hover:bg-red-200" data-status="rejected">Rejected</button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Business</th><th class="px-4 py-3 text-left">Description</th><th class="px-4 py-3 text-left">Category</th><th class="px-4 py-3 text-right">Amount</th><th class="px-4 py-3 text-center">Status</th>${isAdmin ? '<th class="px-4 py-3 text-center">Actions</th>' : ''}</tr>
+                        </thead>
+                        <tbody id="voucher-list">
+                            ${vouchers.map(v => {
+                                const statusClass = v.status === 'pending' ? 'status-pending' : (v.status === 'approved' ? 'status-approved' : 'status-rejected');
+                                return `
+                                    <tr class="border-b hover:bg-gray-50" data-status="${v.status}">
+                                        <td class="px-4 py-3">${v.date}</td>
+                                        <td class="px-4 py-3">${getBusinessName(v.business)}</td>
+                                        <td class="px-4 py-3">${v.description}</td>
+                                        <td class="px-4 py-3">${getCategoryName(v.category)}</td>
+                                        <td class="px-4 py-3 text-right text-red-600">${formatMoney(v.amount)}</td>
+                                        <td class="px-4 py-3 text-center"><span class="status-badge ${statusClass}">${v.status}</span></td>
+                                        ${isAdmin ? `
+                                            <td class="px-4 py-3 text-center">
+                                                ${v.status === 'pending' ? `
+                                                    <button class="approve-voucher text-green-600 hover:text-green-800 mx-1" title="Approve" data-id="${v.id}"><i class="fas fa-check-circle"></i></button>
+                                                    <button class="reject-voucher text-red-600 hover:text-red-800 mx-1" title="Reject" data-id="${v.id}"><i class="fas fa-times-circle"></i></button>
+                                                ` : ''}
+                                                <button class="delete-voucher text-gray-400 hover:text-red-600 mx-1" title="Delete" data-id="${v.id}"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        ` : ''}
+                                    </tr>
+                                `;
+                            }).join('')}
+                            ${vouchers.length === 0 ? '<tr><td colspan="7" class="py-6 text-center text-gray-400">No vouchers.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            area.innerHTML = html;
+
+            document.getElementById('raise-voucher-btn')?.addEventListener('click', () => {
+                showVoucherForm();
+            });
+
+            document.querySelectorAll('.filter-voucher').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const status = e.currentTarget.dataset.status;
+                    document.querySelectorAll('#voucher-list tr').forEach(row => {
+                        if (status === 'all' || row.dataset.status === status) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            if (isAdmin) {
+                document.querySelectorAll('.approve-voucher').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!confirm('Approve this voucher? It will create an expense transaction.')) return;
+                        const id = e.currentTarget.dataset.id;
+                        approveVoucher(id);
+                    });
+                });
+
+                document.querySelectorAll('.reject-voucher').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!confirm('Reject this voucher?')) return;
+                        const id = e.currentTarget.dataset.id;
+                        rejectVoucher(id);
+                    });
+                });
+
+                document.querySelectorAll('.delete-voucher').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        if (confirm('Delete this voucher?')) {
+                            data.vouchers = data.vouchers.filter(v => v.id !== id);
+                            saveData();
+                            render();
+                        }
+                    });
+                });
+            }
+        }
+
+        function approveVoucher(voucherId) {
+            const voucher = data.vouchers.find(v => v.id === voucherId);
+            if (!voucher || voucher.status !== 'pending') return;
+
+            const newTransaction = {
+                id: 'txn_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                date: voucher.date,
+                description: voucher.description + ' (from voucher)',
+                amount: voucher.amount,
+                type: 'expense',
+                category: voucher.category,
+                business: voucher.business
+            };
+            data.transactions.push(newTransaction);
+
+            voucher.status = 'approved';
+            voucher.transactionId = newTransaction.id;
+
+            saveData();
+            render();
+        }
+
+        function rejectVoucher(voucherId) {
+            const voucher = data.vouchers.find(v => v.id === voucherId);
+            if (!voucher || voucher.status !== 'pending') return;
+            voucher.status = 'rejected';
+            saveData();
+            render();
+        }
+
+        // ---------- User Management (admin only) ----------
+        async function renderUsersPage(area) {
+            if (getCurrentUserRole() !== 'admin') {
+                area.innerHTML = '<p class="text-red-500">Access denied.</p>';
+                return;
+            }
+
+            try {
+                const usersList = await apiCall(`/api/users?adminEmail=${encodeURIComponent(currentUser.email)}`);
+                let html = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">User Management</h2>
+                        <button id="add-user-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center"><i class="fas fa-plus mr-2"></i>Add User</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100 text-gray-700">
+                                <tr><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3 text-left">Username</th><th class="px-4 py-3 text-left">Role</th><th class="px-4 py-3 text-center">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                ${usersList.map(u => `
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="px-4 py-3">${u.email}</td>
+                                        <td class="px-4 py-3">${u.username}</td>
+                                        <td class="px-4 py-3">${u.role}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            ${u.email !== currentUser.email ? `
+                                                <button class="delete-user text-red-500 hover:text-red-700" data-email="${u.email}"><i class="fas fa-trash"></i></button>
+                                            ` : '<span class="text-gray-400">Current user</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                area.innerHTML = html;
+
+                document.getElementById('add-user-btn').addEventListener('click', () => {
+                    showUserForm();
+                });
+
+                document.querySelectorAll('.delete-user').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const email = e.currentTarget.dataset.email;
+                        if (!confirm(`Delete user ${email}?`)) return;
+                        try {
+                            await apiCall(`/api/users/${encodeURIComponent(email)}`, 'DELETE', { adminEmail: currentUser.email });
+                            renderUsersPage(area);
+                        } catch (err) {
+                            alert(err.message);
+                        }
+                    });
+                });
+            } catch (err) {
+                area.innerHTML = `<p class="text-red-500">Error loading users: ${err.message}</p>`;
+            }
+        }
+
+        function showUserForm() {
+            const formHtml = `
+                <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                        <h3 class="text-xl font-bold mb-4">Add New User</h3>
+                        <form id="user-form">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Email</label>
+                                <input type="email" id="user-email" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Username</label>
+                                <input type="text" id="user-username" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Password</label>
+                                <input type="password" id="user-password" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Role</label>
+                                <select id="user-role" class="w-full border rounded-lg px-3 py-2">
+                                    <option value="staff">Staff</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end space-x-2 mt-5">
+                                <button type="button" id="cancel-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = formHtml;
+            document.body.appendChild(modalContainer);
+
+            document.getElementById('cancel-modal').addEventListener('click', () => modalContainer.remove());
+
+            document.getElementById('user-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('user-email').value.trim();
+                const username = document.getElementById('user-username').value.trim();
+                const password = document.getElementById('user-password').value;
+                const role = document.getElementById('user-role').value;
+
+                try {
+                    await apiCall('/api/users', 'POST', {
+                        email,
+                        username,
+                        password,
+                        role,
+                        adminEmail: currentUser.email
+                    });
+                    modalContainer.remove();
+                    render(); // refresh users page
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        // ---------- Transaction & Voucher Forms ----------
+        function showTransactionForm(editId = null, prefillBusiness = null) {
+            if (getCurrentUserRole() !== 'admin') return;
+
+            const catOptions = data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const bizOptions = data.businesses.map(b => `<option value="${b.id}" ${b.id === prefillBusiness ? 'selected' : ''}>${b.name}</option>`).join('');
+
+            const formHtml = `
+                <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                        <h3 class="text-xl font-bold mb-4">${editId ? 'Edit' : 'Add'} Journal Entry</h3>
+                        <form id="transaction-form">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Date</label>
+                                <input type="date" id="txn-date" class="w-full border rounded-lg px-3 py-2" value="${new Date().toISOString().slice(0,10)}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Business</label>
+                                <select id="txn-business" class="w-full border rounded-lg px-3 py-2" required>${bizOptions}</select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Description</label>
+                                <input type="text" id="txn-desc" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Amount (TSh)</label>
+                                <input type="number" step="1" id="txn-amount" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Type</label>
+                                <select id="txn-type" class="w-full border rounded-lg px-3 py-2">
+                                    <option value="income">Income</option>
+                                    <option value="expense">Expense</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Category</label>
+                                <select id="txn-category" class="w-full border rounded-lg px-3 py-2">${catOptions}</select>
+                            </div>
+                            <div class="flex justify-end space-x-2 mt-5">
+                                <button type="button" id="cancel-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = formHtml;
+            document.body.appendChild(modalContainer);
+
+            document.getElementById('cancel-modal').addEventListener('click', () => modalContainer.remove());
+
+            document.getElementById('transaction-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTxn = {
+                    id: editId || 'txn_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                    date: document.getElementById('txn-date').value,
+                    business: document.getElementById('txn-business').value,
+                    description: document.getElementById('txn-desc').value,
+                    amount: parseFloat(document.getElementById('txn-amount').value),
+                    type: document.getElementById('txn-type').value,
+                    category: document.getElementById('txn-category').value,
+                };
+
+                if (editId) {
+                    const index = data.transactions.findIndex(t => t.id === editId);
+                    if (index !== -1) data.transactions[index] = newTxn;
+                } else {
+                    data.transactions.push(newTxn);
+                }
+
+                saveData();
+                modalContainer.remove();
+                render();
+            });
+        }
+
+        function showVoucherForm() {
+            const catOptions = data.categories.filter(c => c.type === 'expense').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const bizOptions = data.businesses.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+
+            const formHtml = `
+                <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                        <h3 class="text-xl font-bold mb-4">Raise Payment Voucher</h3>
+                        <form id="voucher-form">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Date</label>
+                                <input type="date" id="voucher-date" class="w-full border rounded-lg px-3 py-2" value="${new Date().toISOString().slice(0,10)}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Business</label>
+                                <select id="voucher-business" class="w-full border rounded-lg px-3 py-2" required>${bizOptions}</select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Description</label>
+                                <input type="text" id="voucher-desc" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Amount (TSh)</label>
+                                <input type="number" step="1" id="voucher-amount" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">Category (Expense)</label>
+                                <select id="voucher-category" class="w-full border rounded-lg px-3 py-2">${catOptions}</select>
+                            </div>
+                            <div class="flex justify-end space-x-2 mt-5">
+                                <button type="button" id="cancel-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Voucher</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = formHtml;
+            document.body.appendChild(modalContainer);
+
+            document.getElementById('cancel-modal').addEventListener('click', () => modalContainer.remove());
+
+            document.getElementById('voucher-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newVoucher = {
+                    id: 'v_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                    date: document.getElementById('voucher-date').value,
+                    business: document.getElementById('voucher-business').value,
+                    description: document.getElementById('voucher-desc').value,
+                    amount: parseFloat(document.getElementById('voucher-amount').value),
+                    category: document.getElementById('voucher-category').value,
+                    status: 'pending',
+                    created: new Date().toISOString()
+                };
+
+                data.vouchers.push(newVoucher);
+                saveData();
+                modalContainer.remove();
+                render();
+            });
+        }
+
+        // ---------- Reports ----------
+        function renderReports(area) {
+            const incomeByCat = {};
+            const expenseByCat = {};
+            data.transactions.forEach(t => {
+                const catName = getCategoryName(t.category);
+                if (t.type === 'income') {
+                    incomeByCat[catName] = (incomeByCat[catName] || 0) + t.amount;
+                } else {
+                    expenseByCat[catName] = (expenseByCat[catName] || 0) + t.amount;
+                }
+            });
+
+            const incomeLabels = Object.keys(incomeByCat);
+            const incomeValues = Object.values(incomeByCat);
+            const expenseLabels = Object.keys(expenseByCat);
+            const expenseValues = Object.values(expenseByCat);
+
+            let html = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Reports</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <h3 class="font-semibold text-lg mb-4">Income by Category</h3>
+                        <canvas id="incomeChart" width="400" height="250"></canvas>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <h3 class="font-semibold text-lg mb-4">Expense by Category</h3>
+                        <canvas id="expenseChart" width="400" height="250"></canvas>
+                    </div>
+                </div>
+            `;
+            area.innerHTML = html;
+
+            if (incomeLabels.length) {
+                new Chart(document.getElementById('incomeChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: incomeLabels,
+                        datasets: [{
+                            data: incomeValues,
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                        }]
+                    }
+                });
+            } else {
+                const el = document.getElementById('incomeChart')?.parentElement;
+                if (el) el.innerHTML = '<p class="text-gray-400">No income data</p>';
+            }
+
+            if (expenseLabels.length) {
+                new Chart(document.getElementById('expenseChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: expenseLabels,
+                        datasets: [{
+                            data: expenseValues,
+                            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6']
+                        }]
+                    }
+                });
+            } else {
+                const el = document.getElementById('expenseChart')?.parentElement;
+                if (el) el.innerHTML = '<p class="text-gray-400">No expense data</p>';
+            }
+        }
+
+        // ---------- Navigation ----------
+        document.getElementById('nav-dashboard').addEventListener('click', () => { currentTab = 'dashboard'; render(); });
+        document.getElementById('nav-wakala').addEventListener('click', () => { currentTab = 'wakala'; render(); });
+        document.getElementById('nav-saloon').addEventListener('click', () => { currentTab = 'saloon'; render(); });
+        document.getElementById('nav-transactions').addEventListener('click', () => { currentTab = 'transactions'; render(); });
+        document.getElementById('nav-vouchers').addEventListener('click', () => { currentTab = 'vouchers'; render(); });
+        document.getElementById('nav-users').addEventListener('click', () => { currentTab = 'users'; render(); });
+        document.getElementById('nav-reports').addEventListener('click', () => { currentTab = 'reports'; render(); });
+
+        if (isLoggedIn()) {
+            showApp();
+            initData();
+            render();
+        }
+    })();
+</script>
+</body>
+</html>
